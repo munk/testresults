@@ -9,7 +9,17 @@ import Types
 import Control.Exception
 
 parseTestCase content =
-  (TestCase "" 0 "" "" 0 [] [] [] [] [])
+  (TestCase
+    (attr name)
+    (attrInt tests)
+    (attr className) "" 0 [] [] [] [] [])
+  where
+    element = head (onlyElems (parseXML content))
+    name = QName "name" Nothing Nothing
+    className = QName "classname" Nothing Nothing
+    tests = QName "assertions" Nothing Nothing
+    attrInt = (\key -> (read (fromMaybe "0" (findAttr key element))) :: Integer)
+    attr = (\key -> (fromMaybe "" (findAttr key element)))
 
 parseFailure :: XmlSource t => t -> Failure
 parseFailure xmlContent = parse Failure xmlContent "failure"
