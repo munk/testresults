@@ -8,6 +8,10 @@ import Data.Maybe
 import Types
 import Control.Exception
 
+readXml filepath = do
+  xmlContent <- readFile filepath
+  return (parseXML xmlContent)
+
 parseTestCase content =
   (TestCase
     (attr name)
