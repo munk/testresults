@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Lib
     ( someFunc
     ) where
@@ -8,10 +9,75 @@ import Data.Maybe
 import Types
 import Control.Exception
 
-readXml :: FilePath -> IO [Content]
+sampleXmlPath = "/Users/jdowns/src/learn-haskell/testResults/sample.xml"
+
+--readXml :: FilePath -> IO [TestSuites]
 readXml filepath = do
-  xmlContent <- readFile filepath
-  return (parseXML xmlContent)
+  raw <- readFile filepath
+  let content = parseXML raw
+      elements = mapMaybe getElement content
+      testSuites = filter (\e -> qNameLens e == "testsuites") elements
+  --return testSuites
+  return $ map parseTestSuites testSuites
+
+findXmlAttr qname = findAttr (QName qname Nothing Nothing)
+readJust probably = read (fromJust probably)
+
+getElement :: Content -> Maybe Element
+getElement (Elem e) = Just e
+getElement _ = Nothing
+
+qNameLens :: Element -> String
+qNameLens element = qName (elName element)
+
+parseTestSuites :: Element -> TestSuites
+parseTestSuites suites =
+  TestSuites suiteNames totalTime totalTests totalFailures totalDisabled totalErrors testSuites
+  where
+    suiteNames = fromJust $ (findXmlAttr "name" suites)
+    totalTime = readJust (findXmlAttr "time" suites) :: Integer
+    totalTests = readJust (findXmlAttr "tests" suites) :: Integer
+    totalFailures = readJust (findXmlAttr "failures" suites) :: Integer
+    totalDisabled = readJust (findXmlAttr "disabled" suites) :: Integer
+    totalErrors = readJust (findXmlAttr "errors" suites) :: Integer
+    testSuites = map parseTestSuite (filter (\x -> qNameLens x == "testsuite") (elChildren suites))
+    
+parseTestSuite :: Element -> TestSuite
+parseTestSuite suite =
+  (TestSuite
+    "name"
+    tests
+    disabled
+    errorCount
+    failureCount
+    skippedCount
+    hostName
+    suiteId
+    packageName
+    runTime
+    timeStamp
+    properties
+    testCases
+    sysOut
+    sysErr)
+  where
+    attr = (\key -> (fromMaybe "" (findXmlAttr key suite)))
+    attrInt = (\key -> (read (fromMaybe "0" (findXmlAttr key suite)) :: Integer))
+    tests = attrInt "tests"
+    disabled = attrInt "disabled"
+    errorCount = attrInt "errors"
+    failureCount = attrInt "failures"
+    skippedCount = attrInt "disabled"
+    hostName = attr "hostname"
+    suiteId = attrInt "id"
+    packageName = attr "package"
+    runTime = attrInt "time"
+    timeStamp = attr "timestamp"
+    properties = []
+    testCases = []
+    sysOut = ""
+    sysErr = ""
+
 
 parseTestCase :: [Content] -> TestCase
 parseTestCase content =

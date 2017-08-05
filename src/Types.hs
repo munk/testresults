@@ -41,7 +41,7 @@ data TestSuite = TestSuite {
   , testCase :: [TestCase]
   , suiteSysOut :: SystemOut
   , suiteSysErr :: SystemErr
-  }
+  } deriving (Show)
 
 data TestCase = TestCase {
     name :: String
@@ -64,7 +64,7 @@ data TestSuites = TestSuites {
   , totalDisabled :: Integer
   , totalErrors :: Integer
   , suites :: [TestSuite]
-  }
+  } deriving (Show)
 
 type SystemOut = String
 type SystemErr = String
